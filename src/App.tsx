@@ -74,8 +74,8 @@ export default function App() {
     try {
       const identification = await identifyPlant(image);
       setResult(identification || "Could not identify the plant. Please try again.");
-    } catch (err) {
-      setError("Failed to identify plant. Check your connection or try again.");
+    } catch (err: any) {
+      setError(err.message || "Failed to identify plant. Check your connection or try again.");
     } finally {
       setIsIdentifying(false);
     }
