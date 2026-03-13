@@ -1,0 +1,5 @@
+{
+  "name": "Verdant Vision",
+  "description": "A modern, neon-dark glassy plant identifier using Gemini AI.",
+  "requestFramePermissions": ["camera"]
+}
