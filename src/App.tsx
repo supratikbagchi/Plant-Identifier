@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, RefreshCw, Leaf, Info, Loader2, Sparkles, ChevronRight, X, Scan } from 'lucide-react';
+import { Camera, RefreshCw, Leaf, Info, Loader2, Sparkles, ChevronRight, X, Scan, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { identifyPlant } from './services/geminiService';
 
@@ -13,7 +13,7 @@ export default function App() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isIdentifying, setIsIdentifying] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -73,7 +73,7 @@ export default function App() {
     setError(null);
     try {
       const identification = await identifyPlant(image);
-      setResult(identification || "Could not identify the plant. Please try again.");
+      setResult(identification);
     } catch (err: any) {
       setError(err.message || "Failed to identify plant. Check your connection or try again.");
     } finally {
@@ -171,10 +171,10 @@ export default function App() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="w-full max-w-md glass-morphism rounded-[2.5rem] overflow-hidden relative flex flex-col"
+              className="w-full max-w-md glass-morphism rounded-[2.5rem] overflow-hidden relative flex flex-col max-h-[90vh]"
             >
               {/* Modal Header */}
-              <div className="p-6 flex items-center justify-between border-b border-white/5">
+              <div className="p-6 flex items-center justify-between border-b border-white/5 shrink-0">
                 <div className="flex items-center gap-2">
                   <Scan className="w-5 h-5 text-neon-green" />
                   <span className="font-bold tracking-widest text-xs uppercase">Plant Scanner</span>
@@ -187,8 +187,8 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Camera Viewport */}
-              <div className="relative aspect-[3/4] bg-black">
+              {/* Content Area */}
+              <div className="relative flex-1 flex flex-col bg-black overflow-hidden">
                 <AnimatePresence mode="wait">
                   {!capturedImage ? (
                     <motion.div 
@@ -196,13 +196,13 @@ export default function App() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="w-full h-full relative"
+                      className="flex-1 relative min-h-[400px]"
                     >
                       <video 
                         ref={videoRef}
                         autoPlay
                         playsInline
-                        className="w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
                       {/* Scanning Overlay */}
                       <div className="absolute inset-0 pointer-events-none">
@@ -215,15 +215,16 @@ export default function App() {
                       </div>
                       
                       {/* Capture Button */}
-                      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+                      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
                         <button 
                           onClick={capturePhoto}
-                          className="w-20 h-20 rounded-full border-4 border-white/20 p-1 group active:scale-95 transition-transform"
+                          className="w-20 h-20 rounded-full border-4 border-white/20 p-1 group active:scale-95 transition-transform shadow-2xl"
                         >
                           <div className="w-full h-full rounded-full bg-white group-hover:bg-neon-green transition-colors flex items-center justify-center">
                             <Camera className="w-8 h-8 text-black" />
                           </div>
                         </button>
+                        <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] text-center mt-3 font-bold">Tap to identify</p>
                       </div>
                     </motion.div>
                   ) : (
@@ -231,9 +232,9 @@ export default function App() {
                       key="preview"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="w-full h-full relative overflow-y-auto custom-scrollbar"
+                      className="flex-1 flex flex-col overflow-y-auto custom-scrollbar"
                     >
-                      <div className="sticky top-0 w-full aspect-[3/4] z-10">
+                      <div className="w-full aspect-[3/4] relative shrink-0">
                         <img 
                           src={capturedImage} 
                           alt="Captured" 
@@ -250,7 +251,7 @@ export default function App() {
                       {/* Results Section */}
                       <div className="p-6 bg-dark-glass">
                         {error ? (
-                          <div className="flex flex-col items-center gap-4 text-center">
+                          <div className="flex flex-col items-center gap-4 text-center py-8">
                             <Info className="w-10 h-10 text-red-400" />
                             <p className="text-red-400">{error}</p>
                             <button 
@@ -261,28 +262,61 @@ export default function App() {
                             </button>
                           </div>
                         ) : result && (
-                          <div className="space-y-6">
+                          <div className="space-y-8">
                             <div className="flex items-center gap-2 text-neon-green">
                               <Sparkles className="w-5 h-5" />
                               <h2 className="font-semibold uppercase tracking-widest text-xs">Identification Complete</h2>
                             </div>
-                            <div className="space-y-4">
-                              {result.split('\n').map((line, i) => (
-                                <p key={i} className="text-white/80 leading-relaxed">
-                                  {line.startsWith('**') ? (
-                                    <span className="text-neon-green font-bold block mt-4 mb-1 uppercase tracking-wider text-xs">
-                                      {line.replace(/\*\*/g, '')}
-                                    </span>
-                                  ) : line}
+                            
+                            <div className="space-y-6">
+                              <div className="border-l-2 border-neon-green pl-4 py-1">
+                                <h3 className="text-neon-green text-3xl font-black tracking-tight leading-none mb-1">
+                                  {result.commonName}
+                                </h3>
+                                <p className="text-white/40 italic font-serif text-sm">
+                                  {result.scientificName}
                                 </p>
-                              ))}
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                                  <p className="text-[10px] uppercase tracking-wider text-white/30 mb-1">Care Level</p>
+                                  <p className="text-neon-green font-bold">{result.careLevel}</p>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                                  <p className="text-[10px] uppercase tracking-wider text-white/30 mb-1">Sunlight</p>
+                                  <p className="text-neon-green font-bold">{result.sunlight}</p>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 col-span-2">
+                                  <p className="text-[10px] uppercase tracking-wider text-white/30 mb-1">Watering</p>
+                                  <p className="text-neon-green font-bold">{result.watering}</p>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <p className="text-[10px] uppercase tracking-wider text-white/30">Interesting Fact</p>
+                                <p className="text-white/80 leading-relaxed text-sm italic">
+                                  "{result.fact}"
+                                </p>
+                              </div>
                             </div>
-                            <button 
-                              onClick={reset}
-                              className="w-full mt-8 py-4 rounded-2xl bg-neon-green text-black font-bold flex items-center justify-center gap-2 hover:bg-white transition-colors"
-                            >
-                              Scan Another <ChevronRight className="w-5 h-5" />
-                            </button>
+
+                            <div className="flex flex-col gap-3">
+                              <button 
+                                onClick={reset}
+                                className="w-full py-4 rounded-2xl bg-neon-green text-black font-bold flex items-center justify-center gap-2 hover:bg-white transition-colors"
+                              >
+                                <RefreshCw className="w-5 h-5" />
+                                SCAN ANOTHER
+                              </button>
+                              <button 
+                                onClick={closeScanner}
+                                className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-colors"
+                              >
+                                <Home className="w-5 h-5" />
+                                BACK TO HOME
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
